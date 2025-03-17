@@ -55,3 +55,7 @@ sudo cp -r /usr/local/src/openalpr/runtime_data /etc/openalpr/
 
 pip install --break-system-packages openalpr
 sudo apt install -y python3-picamera2
+
+
+sudo apt install libcamera-dev
+sudo usermod -aG video $USER

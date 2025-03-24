@@ -1,18 +1,33 @@
+#!/bin/bash
+
+# 🧱 Install system dependencies
 sudo apt install -y build-essential cmake git \
     libopencv-dev libtesseract-dev libleptonica-dev \
     liblog4cplus-dev libcurl4-openssl-dev \
-    tesseract-ocr tesseract-ocr-eng
+    tesseract-ocr tesseract-ocr-eng \
+    python3-picamera2 libcamera-dev \
+    gpsd gpsd-clients python3-gps \
+    python3-pip
 
 sudo apt update
 sudo apt install -y tesseract-ocr libtesseract-dev libleptonica-dev
 
+# 🐍 Python packages
+pip install --break-system-packages openalpr flask gps3 requests boto3
 
+# 📥 Clone openalpr if needed
 cd /usr/local/src
-sudo git clone https://github.com/openalpr/openalpr.git
-cd openalpr/src
+if [ ! -d "openalpr" ]; then
+    sudo git clone https://github.com/openalpr/openalpr.git
+fi
 
-sudo mkdir build && cd build
-cd /usr/local/src/openalpr/src/build
+# 🔧 Compilation section (with permission handling)
+cd /usr/local/src/openalpr/src
+sudo rm -rf build
+sudo mkdir -p build
+sudo chown $USER:$USER build  # 👈 Donne les droits à l'utilisateur courant pour éviter erreurs cmake
+cd build
+
 cmake -DTesseract_INCLUDE_DIR=/usr/include/tesseract \
       -DTesseract_INCLUDE_BASEAPI_DIR=/usr/include/tesseract \
       -DTesseract_INCLUDE_CCSTRUCT_DIR=/usr/include/tesseract \
@@ -26,9 +41,9 @@ make -j$(nproc)
 sudo make install
 sudo ldconfig
 
-sudo nano /etc/openalpr/openalpr.conf
-#A AJOUTER A LA MAIN
-
+# 📝 Config
+sudo mkdir -p /etc/openalpr
+sudo tee /etc/openalpr/openalpr.conf > /dev/null <<EOF
 # OpenALPR configuration file
 
 config_dir = /etc/openalpr/runtime_data/config
@@ -43,19 +58,12 @@ topn = 10
 prewarp_enabled = 1
 prewarp_minplate_height = 10
 prewarp_maxplate_height = 100
-#FIN
+EOF
 
 sudo chmod 644 /etc/openalpr/openalpr.conf
 sudo chown root:root /etc/openalpr/openalpr.conf
-
-
-
-sudo mkdir -p /etc/openalpr
 sudo cp -r /usr/local/src/openalpr/runtime_data /etc/openalpr/
 
-pip install --break-system-packages openalpr
-sudo apt install -y python3-picamera2
-
-
+# 👁️ Access to camera
 sudo apt install libcamera-dev
 sudo usermod -aG video $USER

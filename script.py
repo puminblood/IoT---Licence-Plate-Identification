@@ -114,10 +114,11 @@ def auto_capture(still_config):
                     os.rename(img_path, new_path)
 
                     # Envoi des données
+                    latitude, longitude = get_gps_location()
                     payload = {
                         "license_plate": plate,
-                        "latitude": STATIC_LATITUDE,
-                        "longitude": STATIC_LONGITUDE,
+                        "latitude": latitude or STATIC_LATITUDE,
+                        "longitude": longitude or STATIC_LONGITUDE,
                         "device_id": DEVICE_ID,
                     }
                     headers = {'Content-Type': 'application/json'}
